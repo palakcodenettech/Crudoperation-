@@ -107,7 +107,7 @@ export default function AddUser() {
   }
   function display() {
     // document.getElementById('row').style.display = 'block'
-    // setadd(true)
+    setadd(true)
 
   }
 
