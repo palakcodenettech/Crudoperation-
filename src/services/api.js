@@ -36,6 +36,7 @@ export const carApi = createApi({
               body: editCar.value,
             }),
           }),
+          
     })
 })
 export const { useLazyGetAllProductsQuery, useAddProductMutation, useUpdateProductMutation, useDeleteProductMutation } = carApi

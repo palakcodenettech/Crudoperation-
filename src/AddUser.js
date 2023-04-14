@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+
 import {
   useLazyGetAllProductsQuery,
   useDeleteProductMutation,
   useUpdateProductMutation,
   useAddProductMutation,
 } from "./services/api";
+import axios from "axios";
 export default function AddUser() {
   const [value, setValue] = useState({
     name: null,
     price: null,
     brand: null,
     color: null,
+    file: null
   });
   const [getdata, setdata] = useState([]);
+  const [getImg, setImg] = useState();
   // const [getName, setName] = useState("");
   // const [getColor, setColor] = useState("");
   // const [getBrand, setBrand] = useState("");
@@ -23,12 +27,29 @@ export default function AddUser() {
   const [GetId, setId] = useState();
 
   const [AllCars, result] = useLazyGetAllProductsQuery();
-  const [DelCars , DelCar] = useDeleteProductMutation();
-  const [editCars , EditCar] = useUpdateProductMutation();
+  const [DelCars, DelCar] = useDeleteProductMutation();
+  const [editCars, EditCar] = useUpdateProductMutation();
   const [InsertNewCar, CarResult] = useAddProductMutation();
   const { isSuccess: isCarSuccess, isFetching: isCarFetching } = CarResult;
   const { isSuccess: isDelCarSuccess, isFetching: isDelCarFetching } = DelCar;
   const { isSuccess: isEditCarSuccess, isFetching: isEditCarFetching } = EditCar;
+
+
+
+  function inimg(id,img) {
+    var formdata = new FormData();
+    formdata.append("car_file", img);
+    axios
+      .post(`http://192.168.1.5:3001/cars/uplode/${id}`, formdata, {
+        headers: { Authorization: `bearer ` + localStorage.token },
+      })
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
   function Insert() {
     InsertNewCar(value);
     console.log(CarResult);
@@ -84,8 +105,8 @@ export default function AddUser() {
 
   const edit = (data) => {
     console.log(data);
-      setValue(data);
-    
+    setValue(data);
+
     setId(data._id);
   };
 
@@ -95,6 +116,7 @@ export default function AddUser() {
       brand: value.brand,
       price: value.price,
       color: value.color,
+      file: value.file
     },
     id: GetId,
   };
@@ -103,9 +125,9 @@ export default function AddUser() {
     editCars(editCar);
     console.log(EditCar);
 
-      AllCars({});
+    AllCars({});
     window.location.reload();
-    
+
   };
 
   function handleSubmit() {
@@ -150,7 +172,7 @@ export default function AddUser() {
   //   // setName(response.name);
   //   // setColor(response.color);
   //   // setBrand(response.brand);
-  //   // setPrice(response.price);
+  // setPrice(response.price);
   //   setEdit(true);
   // };
 
@@ -216,7 +238,7 @@ export default function AddUser() {
     <div>
       <button
         className="btn btn-primary text-center m-auto"
-        onClick={() => {setadd(true) ; value.name = "";value.brand="";value.color="";value.price="";}}>
+        onClick={() => { setadd(true); value.name = ""; value.brand = ""; value.color = ""; value.price = ""; }}>
         Add New Car
       </button>
       <table class="table table-striped">
@@ -359,6 +381,23 @@ export default function AddUser() {
                         Update
                       </button>
                     )}
+                  </td>
+                  <td>
+                    {
+                      GetId === i._id ? (
+                        <span>image</span>
+                        
+                      ) : <input
+                      name="file"
+                      type="file"
+                      onChange={(e) => {
+                        // setimg(e.target.files[0]);
+                        // setId(i.i_id)
+                        inimg(i._id,e.target.files[0]);
+                        // console.log(e.target.files[0]);
+                      }}
+                    />
+                    }
                   </td>
                 </tr>
               );

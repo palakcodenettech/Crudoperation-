@@ -1,19 +1,34 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { useState } from "react";
 import axios from "axios";
+import { useFormik } from "formik";
 import "./App.css";
-
+import * as Formik from "formik";
+import { signUpSchema } from "./signUpSchema";
 function Login() {
-  const [getEmail, setEmail] = useState("");
-  const [getPassword, setPassword] = useState("");
-  const submit = () => {
-    axios
+  // const [getEmail, setEmail] = useState("");
+  // const [getPassword, setPassword] = useState("");
+  // const [getSubmit,setSubmit] = useState({
+
+  const initialValues = {
+    email: "",
+    password: "",
+  };
+  
+  const { values, errors, touched, handleBlur,handleChange, handleSubmit } =
+    useFormik({
+      initialValues,
+      validationSchema: signUpSchema,
+      onSubmit: (values, action) => {
+        // console.log(values);
+        // action.resetForm();
+        axios
       .post(
-        "http://192.168.1.8:3001/login",
+        "http://192.168.1.5:3001/login",
         {
-          email: getEmail,
-          password: getPassword,
-        },
+          email: values.email,
+          password: values.password,
+        }
         // {
         //   headers: {
         //     authorization: "Basic U2F0djpTYXR2",
@@ -24,20 +39,27 @@ function Login() {
         console.log(response.status);
         console.log(response.config.data);
         if (response.status == "200") {
-          window.localStorage.setItem("email", getEmail); 
+          window.localStorage.setItem("email", values.email);
           console.log(response);
           // window.localStorage.setItem(
           //   "password",
           //   response.config.data.password
           // );
           window.location.href = "/adduser";
+          // setSubmit(response);
+          // console.log(getSubmit);
         }
         // Window.location.reload(false);
-        localStorage.setItem("token", response.data.data.token)
-        console.log("loginResponse", `localStorage set with token value: ${response.data.data.token}`)
+        localStorage.setItem("token", response.data.data.token);
+        console.log(
+          "loginResponse",
+          `localStorage set with token value: ${response.data.data.token}`
+        );
         console.log(response.data.data.token);
-      })
-  };
+      });
+      },
+    });
+  console.log(errors);
 
   return (
     <div>
@@ -60,36 +82,50 @@ function Login() {
               </p>
             </div>
 
-            <div className="login-info mt-10">
-              <h1 className="capitalize text-gray-600 text-sm font-bold tracking-wide">
-                email address
-              </h1>
-              <input
-                type="email"
-                name={getEmail}
-                id=""
-                className="py-2 bg-sky-100 w-full focus:outline-none placeholder:text-sm"
-                value={getEmail}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <h1 className="capitalize text-gray-600 text-sm font-bold mt-6 float-left tracking-wide">
-                password
-              </h1>
-              <p className="capitalize text-orange-600 text-xs text-right font-bold mt-6">
-                forgot password?
-              </p>
-              <input
-                type="password"
-                name={getPassword}
-                id=""
-                className="py-2 bg-sky-100 w-full focus:outline-none"
-                value={getPassword}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+            {/* <form onSubmit={onSubmit}> */}
+              <div className="login-info mt-10">
+                <h1 className="capitalize text-gray-600 text-sm font-bold tracking-wide">
+                  email address
+                </h1>
+                <input
+                  autoComplete="off"
+                  type="email"
+                  name="email"
+                  id="email"
+                  placeholder="email"
+                  className="py-2 bg-sky-100 w-full focus:outline-none placeholder:text-sm"
+                  value={values.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                />
+                {errors.email && touched.email ? (
+                  <p className="form-error">{errors.email}</p>
+                ) : null}
+                <h1 className="capitalize text-gray-600 text-sm font-bold mt-6 float-left tracking-wide">
+                  password
+                </h1>
+                <p className="capitalize text-orange-600 text-xs text-right font-bold mt-6">
+                  forgot password?
+                </p>
+                <input
+                  autoComplete="off"
+                  type="password"
+                  name="password"
+                  id="password"
+                  placeholder="password"
+                  className="py-2 bg-sky-100 w-full focus:outline-none placeholder:text-sm"
+                  value={values.password}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                />
+                {errors.password && touched.password ? (
+                  <p className="form-error">{errors.password}</p>
+                ) : null}
+              </div>
+            {/* </form> */}
             <div
               className="mt-10 bg-orange-600 rounded-full text-center cursor-pointer "
-              onClick={submit}
+              onClick={handleSubmit}
             >
               <button
                 type="submit"
@@ -105,7 +141,6 @@ function Login() {
                 href="/register"
                 className="capitalize text-orange-600 text-md text-right font-bold"
               >
-                {" "}
                 sign up
               </a>
             </div>
