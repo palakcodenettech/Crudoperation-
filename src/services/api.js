@@ -30,10 +30,10 @@ export const carApi = createApi({
         }),
 
         updateProduct: builder.mutation({
-            query: (editCar) => ({
-              url: `/update/${editCar.id}`,
+            query: (update) => ({
+              url: `/update/${update.GetId}`,
               method: "PUT",
-              body: editCar.value,
+              body: update.formdata,
             }),
           }),
           

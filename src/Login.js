@@ -1,9 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import { useState } from "react";
 import axios from "axios";
 import { useFormik } from "formik";
 import "./App.css";
-import * as Formik from "formik";
 import { signUpSchema } from "./signUpSchema";
 function Login() {
   // const [getEmail, setEmail] = useState("");
@@ -24,7 +22,7 @@ function Login() {
         // action.resetForm();
         axios
       .post(
-        "http://192.168.1.5:3001/login",
+        "http://192.168.1.7:8001/login",
         {
           email: values.email,
           password: values.password,
@@ -59,7 +57,7 @@ function Login() {
       });
       },
     });
-  console.log(errors);
+  // console.log(errors);
 
   return (
     <div>
