@@ -17,7 +17,7 @@ export default function Register() {
         // console.log(values);
         // action.resetForm();
         axios
-          .post("http://192.168.1.7:8001", {
+          .post("http://192.168.1.6:8001", {
             name: values.name,
             email: values.email,
             password: values.password,

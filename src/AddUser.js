@@ -4,17 +4,18 @@
 
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { render } from "react-dom";
 import "react-responsive-modal/styles.css";
 import { Modal } from "react-responsive-modal";
-import ImageUploading from 'react-images-uploading';
+import { useFormik } from "formik";
 import swal from 'sweetalert';
-import {
-  useLazyGetAllProductsQuery,
-  useDeleteProductMutation,
-  useUpdateProductMutation,
-  useAddProductMutation,
-} from "./services/api";
+import { useLazyGetAllProductsQuery, useDeleteProductMutation, useUpdateProductMutation, useAddProductMutation, } from "./services/api";
+import { addUserSchema } from "./addUserSchema";
+import { Link } from "react-router-dom";
+import Login from "./Login";
+
+
+
+
 const styles = {
   container: {
     display: "flex",
@@ -38,22 +39,15 @@ const styles = {
   },
 };
 export default function AddUser() {
-  const [value, setValue] = useState({
+  const initialValues = {
     name: null,
-    price: null,
-    brand: null,
     color: null,
-    file: null
-  });
-
+    brand: null,
+    price: null
+  };
   const [openModel, setOpenModel] = useState(false)
   const [getdata, setdata] = useState([]);
   const [selectedImage, setSelectedImage] = useState();
-  // const [getName, setName] = useState("");
-  // const [getColor, setColor] = useState("");
-  // const [getBrand, setBrand] = useState("");
-  // const [getPrice, setPrice] = useState("");
-  // const [isEdit, setEdit] = useState(false);
   const [add, setadd] = useState(false);
   const [GetId, setId] = useState();
   const [AllCars, result] = useLazyGetAllProductsQuery();
@@ -70,35 +64,19 @@ export default function AddUser() {
     isError: isuprError,
     error: upError,
   } = Updateresult;
-  const [images, setImages] = React.useState([]);
   const [imagUrl, setImgUrl] = useState("");
-  const maxNumber = 69;
-  
-  const onChange = (imageList, addUpdateIndex) => {
-    // data for submit
-    console.log(imageList, addUpdateIndex);
-    setImages(imageList);
-  };
-  const imageChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedImage(e.target.files[0]);
-      setValue({
-        ...value,
-        car_file: e.target.files[0]
-      })
-    }
-  };
-
   // This function will be triggered when the "Remove This Image" button is clicked
-  const removeSelectedImage = () => {
-    setSelectedImage();
-  };
-  var formdata = new FormData();
-  formdata.append("name", value.name);
-  formdata.append("brand", value.brand);
-  formdata.append("price", value.price);
-  formdata.append("color", value.color);
-  formdata.append("car_file", value.car_file);
+
+
+  // const userType = window.localStorage.getItem('email')
+  // let email;
+  // email = userType === "email" ? true : false
+  // let Authorization = { 'token': Authorization }
+
+  // Authorization.token ? <Login /> : <AddUser to="/" />
+  
+
+
   function Insert() {
     console.log();
     // InsertNewCar(formdata);
@@ -106,21 +84,87 @@ export default function AddUser() {
     setadd(false);
     addsweetalert();
   }
-  const { isSuccess, isFetching } = result;
-  const handleChange = (e) => {
-    setValue({
-      ...value,
-      [e.target.name]: e.target.value,
-    });
+  const del = (id) => {
+    sweetalert(id);
   };
+  const edit = (data) => {
+    console.log(data);
+    setFieldValue("name", data.name);
+    setFieldValue("color", data.color);
+    setFieldValue("brand", data.brand);
+    setFieldValue("price", data.price);
+    if (selectedImage === "") {
+      console.log("blank");
+    }
+    else {
+      setFieldValue("car_file", data.car_file);
+      console.log("file");
+    }
+    setId(data._id);
+  };
+  const confirm = () => {
+    var formdata = new FormData();
+    formdata.append("name", initialValues.name);
+    formdata.append("brand", initialValues.brand);
+    formdata.append("price", initialValues.price);
+    formdata.append("color", initialValues.color);
+    formdata.append("car_file", initialValues.car_file);
+    
+    // editCars(update);
+    // window.location.reload();
+    editsweetalert()
+    console.log(EditCar);
+    console.log(values.image);
+    console.log(values.image_url);
+    console.log(values.name);
+    AllCars({});
+    setId("")
+  };
+
+  function handlesubmit() {
+    window.location.href = "/adduser";
+  }
+  const { values, errors, touched, handleBlur, handleSubmit, handleChange, setFieldValue } =
+    useFormik({
+      initialValues,
+      validationSchema: addUserSchema,
+      onSubmit: (values, action) => {
+        var formdata = new FormData();
+        formdata.append("name", values.name);
+        formdata.append("brand", values.brand);
+        formdata.append("price", values.price);
+        formdata.append("color", values.color);
+        formdata.append("car_file", values.car_file);
+        const update = {
+          formdata,
+          GetId
+        }
+        setadd(false);
+        editCars(update);
+        addsweetalert();
+      },
+      handleChange(e) {
+        initialValues({
+          ...initialValues,
+          [e.target.name]: e.target.value,
+        });
+
+      }
+
+    })
+  const { isSuccess, isFetching } = result;
+
+
+
+
+
   useEffect(() => {
     AllCars({});
   }, []);
   useEffect(() => {
-    if (isSuccess && !isFetching ||
-      (isupSuccess && !isupFetching) ) {
-      console.log(result);
-      setdata(result.data);
+    if (isSuccess && !isFetching ) {
+      console.log(result.data);
+      setdata(result?.data.length > 0 ? result.data : []);
     }
   }, [isSuccess, isFetching]);
   useEffect(() => {
@@ -138,72 +182,12 @@ export default function AddUser() {
       AllCars({})
     }
   }, [isDelCarSuccess, isDelCarFetching]);
+ 
 
 
 
-  const del = (id) => {
-
-    // DelCars(id);
-    // AllCars({});
-    sweetalert(id);
-    // console.log(id);
-    // console.log(DelCar);
-
-  };
-
-  const edit = (data) => {
-    console.log(data);
-    setValue(data);
-    setId(data._id);
-
-  };
-
-  const editCar = {
-    value: {
-      name: value.name,
-      brand: value.brand,
-      price: value.price,
-      color: value.color,
-      car_file: value.car_file
-    },
-    id: GetId,
-  };
-
-  const changeImage = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedImage(e.target.files[0]);
-      setValue({
-        ...value,
-        car_file: e.target.files[0],
-      });
-    }
-  };
-  const confirm = () => {
-    var formdata = new FormData();
-    formdata.append("name", value.name);
-    formdata.append("brand", value.brand);
-    formdata.append("price", value.price);
-    formdata.append("color", value.color);
 
 
-    formdata.append("car_file", value.car_file);
-
-    
-    // window.location.reload();
-    editsweetalert()
-    console.log(EditCar);
-    console.log(value.image);
-    console.log(value.image_url);
-    console.log(value.name);
-    console.log(editCar);
-
-    AllCars({});
-
-  };
-
-  function handleSubmit() {
-    window.location.href = "/adduser";
-  }
   function sweetalert(id) {
     swal({
       title: "Are you sure?",
@@ -215,15 +199,22 @@ export default function AddUser() {
       .then((willDelete) => {
         if (willDelete) {
           DelCars(id);
-          
-        } 
+
+        }
       });
   }
-  function editsweetalert(id){
+  function editsweetalert() {
+    var formdata = new FormData();
+    formdata.append("name", values.name);
+    formdata.append("brand", values.brand);
+    formdata.append("price", values.price);
+    formdata.append("color", values.color);
+    formdata.append("car_file", values.car_file);
+
     swal({
       title: "Are you sure?",
-      text: "Once deleted, you will not be able to recover this imaginary file!",
-      icon: "warning",
+      text: "Your field is Edit",
+      icon: "success",
       buttons: true,
       dangerMode: true,
     })
@@ -234,151 +225,59 @@ export default function AddUser() {
             GetId
           }
           editCars(update);
-          window.location.reload();
-          
-        } 
-      });
-  }
-  function addsweetalert(){
-    swal({
-      title: "Are you sure?",
-      text: "Once deleted, you will not be able to recover this imaginary file!",
-      icon: "warning",
-      buttons: true,
-      dangerMode: true,
-    })
-      .then((willDelete) => {
-        if (willDelete) {
-          InsertNewCar(formdata);;
-          swal("Poof! Your imaginary file has been deleted!", {
-            icon: "success",
-          });
-        } else {
-          swal("Your imaginary file is safe!");
+          // window.location.reload();
+
         }
       });
   }
-  // function Alldata() {
-  //   axios
-  //     .get("http://192.168.1.7:3001/cars/getdata", {
-  //       headers: {
-  //         Authorization:
-  //           "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InBhbGFrQGdtYWlsLmNvbSIsInBhc3N3b3JkIjoicGFsYWsxMjMiLCJpYXQiOjE2ODExODg1OTV9.u93i3pRaN8l5A_vAO0pES4y4hWYGxyyBptTNJPVhu-Q",
-  //       },
-  //     })
-  //     .then(function (res) {
-  //       console.log(res.data);
-  //       setdata(res.data);
-  //     })
-  //     .catch(function (error) {
-  //       console.log(error);
-  //     });
-  // }
+  function addsweetalert() {
+    var formdata = new FormData();
+    formdata.append("name", values.name);
+    formdata.append("brand", values.brand);
+    formdata.append("price", values.price);
+    formdata.append("color", values.color);
+    formdata.append("car_file", values.car_file);
 
-  // const Delete = (id) => {
-  //   axios
-  //     .delete(`http://192.168.1.7:3001/cars/deletedata/${id}`, {
-  //       headers: {
-  //         Authorization:
-  //           "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InBhbGFrQGdtYWlsLmNvbSIsInBhc3N3b3JkIjoicGFsYWsxMjMiLCJpYXQiOjE2ODExODg1OTV9.u93i3pRaN8l5A_vAO0pES4y4hWYGxyyBptTNJPVhu-Q",
-  //       },
-  //     })
-  //     .then(function (response) {
-  //       console.log(response);
-  //       // window.location.reload(true);
-  //     })
-  //     .catch(function (error) {
-  //       console.log(error);
-  //     });
-  // };
-  // const Edit = (response) => {
-  //   setId(response._id);
-  //   console.log(response._id);
-  //   // setName(response.name);
-  //   // setColor(response.color);
-  //   // setBrand(response.brand);
-  // setPrice(response.price);
-  //   setEdit(true);
-  // };
+    swal({
+      title: "Are you sure?",
+      text: "Your field is successfully added",
+      icon: "success",
+      buttons: true,
+      dangerMode: true,
+    })
+      .then((willAdd) => {
+        if (willAdd) {
+          InsertNewCar(formdata);
+        }
+      });
+  }
+  const removeSelectedImage = () => {
+    setSelectedImage();
+  };
 
-  // const Confirm = (id) => {
-  //   axios
-  //     .put(
-  //       `http://192.168.1.7:3001/cars/update/${id}`,
-  //       {
-  //         name: getName,
-  //         brand: getBrand,
-  //         color: getColor,
-  //         price: getPrice,
-  //       },
-  //       {
-  //         headers: {
-  //           Authorization:
-  //             "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InBhbGFrQGdtYWlsLmNvbSIsInBhc3N3b3JkIjoicGFsYWsxMjMiLCJpYXQiOjE2ODExODg1OTV9.u93i3pRaN8l5A_vAO0pES4y4hWYGxyyBptTNJPVhu-Q",
-  //         },
-  //       }
-  //     )
 
-  //     .then(function (response) {
-  //       Alldata();
-  //       console.log(id);
 
-  //       window.location.reload();
-  //     })
-  //     .catch(function (error) {
-  //       console.log(error);
-  //     });
-  // };
-  // const Insert = () => {
-  //   console.log(value);
-  //   axios
-  //     .post(
-  //       "http://192.168.1.7:3001/cars/insert",
-  //       {
-  //         name: value.name,
-  //         brand: value.brand,
-  //         price: value.price,
-  //         color: value.color,
-  //       },
-  //       {
-  //         headers: {
-  //           Authorization:
-  //             "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InBhbGFrQGdtYWlsLmNvbSIsInBhc3N3b3JkIjoicGFsYWsxMjMiLCJpYXQiOjE2ODExODg1OTV9.u93i3pRaN8l5A_vAO0pES4y4hWYGxyyBptTNJPVhu-Q",
-  //         },
-  //       }
-  //     )
-  //     .then(function (res) {
-  //       console.log(res.data);
 
-  //       AllCars();
-  //       setadd(false);
-  //       // setdata(res.data)
-  //     })
-  //     .catch(function (error) {
-  //       console.log(error);
-  //     });
-  // };
-  // console.log(imagUrl);
   return (
 
     <div className="p-10">
-      
+
       <div className="flex justify-between mb-10">
         {
           add ? null :
             <button
               className="btn btn-primary"
-              onClick={() => { setadd(true); value.name = ""; value.brand = ""; value.color = ""; value.price = ""; }}>
+              onClick={() => { setadd(true); values.name = ""; values.brand = ""; values.color = ""; values.price = ""; }}>
               Add New Car
             </button>
         }
         {
           add ? null :
             <div className="inline-flex">
-              <button onClick={handleSubmit} className="btn border border-solid border-black">Login</button>
+              <button onClick={handlesubmit} className="btn border border-solid border-black">Login</button>
               <br />
               <button className="btn btn-primary">
-                <a href="/Dashboard" className="block text-[#fff] no-underline">Dashboard</a>
+                <Link to='/dashboard' className="block text-[#fff] no-underline">Dashboard</Link>
               </button>
             </div>
         }
@@ -405,79 +304,108 @@ export default function AddUser() {
 
             <tr id="row">
               <td>
-                <input type="text" placeholder="Enter name" name="name" value={value.name} onChange={handleChange}
+                <input type="text" placeholder="Enter name" name="name" value={values.name} onChange={handleChange} onBlur={handleBlur}
                 />
+                {errors.name && touched.name ? (
+                  <p className="form-error">{errors.name}</p>
+                ) : null}
               </td>
               <td>
-                <input type="text" name="color" placeholder="Enter color" value={value.color} onChange={handleChange}
+                <input type="text" name="color" placeholder="Enter color" value={values.color} onChange={handleChange} onBlur={handleBlur}
                 />
+                {errors.color && touched.color ? (
+                  <p className="form-error">{errors.color}</p>
+                ) : null}
               </td>
               <td>
-                <input type="text" placeholder="Enter brand" value={value.brand} name="brand" onChange={handleChange}
+                <input type="text" placeholder="Enter brand" value={values.brand} name="brand" onChange={handleChange} onBlur={handleBlur}
                 />
+                {errors.brand && touched.brand ? (
+                  <p className="form-error">{errors.brand}</p>
+                ) : null}
               </td>
               <td>
-                <input type="text" placeholder="Enter price" value={value.price} name="price" onChange={handleChange}
+                <input type="text" placeholder="Enter price" value={values.price} name="price" onChange={handleChange} onBlur={handleBlur}
                 />
+                {errors.price && touched.price ? (
+                  <p className="form-error">{errors.price}</p>
+                ) : null}
               </td>
               <td>
                 <input
                   name="file"
                   type="file"
                   multiple
-                  onChange={(e) => {
-                    console.log(e.target.files);
-                    setValue({
-                      ...value,
-                      car_file: e.target.files[0]
-                    })
+                  onChange={(event) => {
+                    setFieldValue("car_file", event.currentTarget.files[0]);
                   }}
                 />
               </td>
               <td>
-                <button className="btn btn-primary" onClick={Insert}>
-                  Add new
-                </button>
+                <div onClick={handleSubmit}>
+                  <button className="btn btn-primary" onClick={Insert}>
+                    Add new
+                  </button>
+                </div>
               </td>
 
             </tr>
           </div>
         ) : (
           <tbody>
-            {getdata.map((i, index) => {
+            {getdata?.map((i, index) => {
               return (
                 <tr>
                   <td key={index}>
                     {GetId === i._id ? (
-                      <input name="name" type="text" placeholder="name" value={value.name} onChange={handleChange}
-                      />
+                      <div>
+                        <input name="name" type="text" placeholder="name" value={values.name} onChange={handleChange} onBlur={handleBlur} />
+                        {errors.name && touched.name ? (
+                          <p className="form-error">{errors.name}</p>
+                        ) : null}
+                      </div>
                     ) : (
-                      <span>{i.name}</span>
+                      <span>{i?.name}</span>
                     )}
                   </td>
                   <td>
                     {GetId === i._id ? (
-                      <input name="color" type="text" placeholder="color" value={value.color} onChange={handleChange}
-                      />
+                      <div>
+                        <input name="color" type="text" placeholder="color" value={values.color} onChange={handleChange} onBlur={handleBlur}
+                        />
+                        {errors.color && touched.color ? (
+                          <p className="form-error">{errors.color}</p>
+                        ) : null}
+                      </div>
                     ) : (
-                      <span>{i.color}</span>
+                      <span>{i?.color}</span>
                     )}
                   </td>
                   <td>
                     {GetId === i._id ? (
-                      <input name="brand" type="text" placeholder="brand" value={value.brand} onChange={handleChange}
-                      />
+                      <div>
+                        <input name="brand" type="text" placeholder="brand" value={values.brand} onChange={handleChange} onBlur={handleBlur}
+                        />
+                        {errors.brand && touched.brand ? (
+                          <p className="form-error">{errors.brand}</p>
+                        ) : null}
+                      </div>
                     ) : (
-                      <span>{i.brand}</span>
+                      <span>{i?.brand}</span>
                     )}
                   </td>
 
                   <td>
                     {GetId === i._id ? (
-                      <input name="price" type="text" placeholder="price" value={value.price} onChange={handleChange}
-                      />
+                      <div>
+                        <input name="price" type="text" placeholder="price" value={values.price} onChange={handleChange} onBlur={handleBlur}
+                        />
+                        {errors.price && touched.price ? (
+                          <p className="form-error">{errors.price}</p>
+                        ) : null}
+                      </div>
                     ) : (
-                      <span>{i.price}</span>
+                      <span>{i?.price}</span>
                     )}
                   </td>
                   <td>
@@ -485,7 +413,10 @@ export default function AddUser() {
                       GetId === i._id ? (
 
                         <>
-                          <input name="file" type="file" onChange={(e) => imageChange(e)} />
+                          <input name="file" type="file" onChange={(event) => {
+                            setFieldValue("car_file", event.currentTarget.files[0]);
+                            setSelectedImage(event.currentTarget.files[0])
+                          }} />
 
                           {!selectedImage ? (
                             null
@@ -497,7 +428,6 @@ export default function AddUser() {
                                 alt=""
                                 height="150px"
                                 width="150px"
-
                               />
                               <button onClick={removeSelectedImage} style={styles.delete}>
                                 Remove This Image
@@ -508,32 +438,26 @@ export default function AddUser() {
                           <div>
                             {!selectedImage || selectedImage == "" ? (
                               <div style={styles.preview}>
-                                <img src={`http://192.168.1.7:8001/file/${i.image}`} style={styles.image} alt="Thumb" height="150px" width="150px" />
+                                <img src={`http://192.168.1.6:8001/file/${i.image}`} style={styles.image} alt="Thumb" height="150px" width="150px" />
                               </div>
                             ) : ("")}
                           </div>
                         </>
                       ) :
                         <div>
-                          <img src={`http://192.168.1.7:8001/file/${i.image}`} alt="image" height="150px" width="150px" onClick={() => {
+                          <img src={`http://192.168.1.6:8001/file/${i.image}`} alt="image" height="150px" width="150px" onClick={() => {
                             setOpenModel(true); setImgUrl(`${process.env.REACT_APP_PUBLIC_URL}/file/${i.image}`);
-                            setSelectedImage("")
                             edit(i)
-                          }
-
-                          } />
+                          }} />
                         </div>
                     }
                   </td>
-                  {/* <div height="500px"> */}
-
-                  {/* </div> */}
                   <td>
                     <button className="btn btn-danger" onClick={() => { del(i._id); }}>Delete</button>
                   </td>
                   <td>
                     {GetId === i._id ? (
-                      <button className="btn btn-primary" onClick={() => {confirm(GetId);setValue(true)}}>Confirm</button>
+                      <button className="btn btn-primary" onClick={() => { confirm(GetId); editCars(true) }}>Confirm</button>
                     ) : (
                       <button onClick={() => { edit(i); }} className="btn btn-primary">
                         Update
@@ -570,7 +494,10 @@ export default function AddUser() {
 
           <tr>
             <td>
-              <input name="file" type="file" onChange={(e) => changeImage(e)} />
+              <input name="file" type="file" onChange={(event) => {
+                setFieldValue("car_file", event.currentTarget.files[0]);
+                setSelectedImage(event.currentTarget.files[0])
+              }} />
               {!selectedImage ? (
                 <div style={styles.preview}>
                   <img src={imagUrl} style={styles.image} alt="Thumb" />

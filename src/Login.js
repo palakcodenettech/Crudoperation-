@@ -1,19 +1,17 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import "./App.css";
 import { signUpSchema } from "./signUpSchema";
 function Login() {
-  // const [getEmail, setEmail] = useState("");
-  // const [getPassword, setPassword] = useState("");
-  // const [getSubmit,setSubmit] = useState({
-
+  const navigate = useNavigate();
   const initialValues = {
     email: "",
     password: "",
   };
-  
-  const { values, errors, touched, handleBlur,handleChange, handleSubmit } =
+
+  const { values, errors, touched, handleBlur, handleChange, handleSubmit } =
     useFormik({
       initialValues,
       validationSchema: signUpSchema,
@@ -21,40 +19,35 @@ function Login() {
         // console.log(values);
         // action.resetForm();
         axios
-      .post(
-        "http://192.168.1.7:8001/login",
-        {
-          email: values.email,
-          password: values.password,
-        }
-        // {
-        //   headers: {
-        //     authorization: "Basic U2F0djpTYXR2",
-        //   },
-        // }
-      )
-      .then(function (response) {
-        console.log(response.status);
-        console.log(response.config.data);
-        if (response.status == "200") {
-          window.localStorage.setItem("email", values.email);
-          console.log(response);
-          // window.localStorage.setItem(
-          //   "password",
-          //   response.config.data.password
-          // );
-          window.location.href = "/adduser";
-          // setSubmit(response);
-          // console.log(getSubmit);
-        }
-        // Window.location.reload(false);
-        localStorage.setItem("token", response.data.data.token);
-        console.log(
-          "loginResponse",
-          `localStorage set with token value: ${response.data.data.token}`
-        );
-        console.log(response.data.data.token);
-      });
+          .post(
+            "http://192.168.1.6:8001/login",
+            {
+              email: values.email,
+              password: values.password,
+            }
+            // {
+            //   headers: {
+            //     authorization: "Basic U2F0djpTYXR2",
+            //   },
+            // }
+          )
+          .then(function (response) {
+            console.log(response.status);
+            console.log(response.config.data);
+            if (response.status == "200") {
+              localStorage.setItem("email", values.email);
+              localStorage.setItem("token", response.data.data.token);
+
+              console.log(response);
+              // window.location.href = "/adduser";
+              navigate("/adduser");
+            }
+            console.log(
+              "loginResponse",
+              `localStorage set with token value: ${response.data.data.token}`
+            );
+            console.log(response.data.data.token);
+          });
       },
     });
   // console.log(errors);
@@ -81,54 +74,51 @@ function Login() {
             </div>
 
             {/* <form onSubmit={onSubmit}> */}
-              <div className="login-info mt-10">
-                <h1 className="capitalize text-gray-600 text-sm font-bold tracking-wide">
-                  email address
-                </h1>
-                <input
-                  autoComplete="off"
-                  type="email"
-                  name="email"
-                  id="email"
-                  placeholder="email"
-                  className="py-2 bg-sky-100 w-full focus:outline-none placeholder:text-sm"
-                  value={values.email}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                />
-                {errors.email && touched.email ? (
-                  <p className="form-error">{errors.email}</p>
-                ) : null}
-                <h1 className="capitalize text-gray-600 text-sm font-bold mt-6 float-left tracking-wide">
-                  password
-                </h1>
-                <p className="capitalize text-orange-600 text-xs text-right font-bold mt-6">
-                  forgot password?
-                </p>
-                <input
-                  autoComplete="off"
-                  type="password"
-                  name="password"
-                  id="password"
-                  placeholder="password"
-                  className="py-2 bg-sky-100 w-full focus:outline-none placeholder:text-sm"
-                  value={values.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                />
-                {errors.password && touched.password ? (
-                  <p className="form-error">{errors.password}</p>
-                ) : null}
-              </div>
+            <div className="login-info mt-10">
+              <h1 className="capitalize text-gray-600 text-sm font-bold tracking-wide">
+                email address
+              </h1>
+              <input
+                autoComplete="off"
+                type="email"
+                name="email"
+                id="email"
+                placeholder="email"
+                className="py-2 bg-sky-100 w-full focus:outline-none placeholder:text-sm"
+                value={values.email}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+              {errors.email && touched.email ? (
+                <p className="form-error">{errors.email}</p>
+              ) : null}
+              <h1 className="capitalize text-gray-600 text-sm font-bold mt-6 float-left tracking-wide">
+                password
+              </h1>
+              <p className="capitalize text-orange-600 text-xs text-right font-bold mt-6">
+                forgot password?
+              </p>
+              <input
+                autoComplete="off"
+                type="password"
+                name="password"
+                id="password"
+                placeholder="password"
+                className="py-2 bg-sky-100 w-full focus:outline-none placeholder:text-sm"
+                value={values.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+              {errors.password && touched.password ? (
+                <p className="form-error">{errors.password}</p>
+              ) : null}
+            </div>
             {/* </form> */}
             <div
               className="mt-10 bg-orange-600 rounded-full text-center cursor-pointer "
               onClick={handleSubmit}
             >
-              <button
-                type="submit"
-                className="capitalize py-3 text-white font-bold "
-              >
+              <button className="capitalize py-3 text-white font-bold ">
                 sign in
               </button>
             </div>
