@@ -17,10 +17,10 @@ function App() {
         <Route path="/Register" element={(window.localStorage.getItem('email') !== null) ? <AddUser /> : <Register />}/>
       </Routes> */}
       <Routes>
+          <Route path="/register" element={<Register />} />
         <Route path="/" element={<Login />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/Adduser" element={<AddUser />} />
-          <Route path="/register" element={<Register />} />
           <Route path="/Dashboard" element={<Dashboard />} />
         </Route>
       </Routes>

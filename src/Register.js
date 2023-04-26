@@ -1,43 +1,57 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import axios from "axios";
 import { registerSchema } from "./registerSchema";
+import { useRegisterUserMutation } from "./services/api";
+import { useNavigate } from "react-router-dom";
 export default function Register() {
+  const navigate = useNavigate();
   const initialValues = {
     name: "",
     email: "",
     password: "",
     age: "",
   };
-  const { values, errors, touched, handleBlur, handleChange, handleSubmit } =
-    useFormik({
-      initialValues,
-      validationSchema: registerSchema,
-      onSubmit: (values, action) => {
-        // console.log(values);
-        // action.resetForm();
-        axios
-          .post("http://192.168.1.6:8001", {
-            name: values.name,
-            email: values.email,
-            password: values.password,
-            age:values.age
-          })
-          .then(function () {
-            if (
-              values.name === "" &&
-              values.email === "" &&
-              values.password === "" &&
-              values.age === ""
-            ) {
-              window.location.href = "/Register";
-            } else {
-              window.location.href = "/";
-            }
-          });
-      },
-    });
 
+  const [Register, Registerresult] = useRegisterUserMutation();
+  const { isSuccess, isFetching, isError, error } = Registerresult;
+  const {
+    values,
+    errors,
+    touched,
+    handleBlur,
+    handleChange,
+    handleSubmit,
+    setFieldValue,
+  } = useFormik({
+    initialValues,
+    validationSchema: registerSchema,
+    onSubmit: (values, action) => {
+      // console.log(values);
+      // action.resetForm();
+      Register({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        age: values.age,
+      });
+    },
+  });
+  useEffect(() => {
+    
+        navigate("/login");
+      
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[])
+  useEffect(() => {
+    if (isSuccess && !isFetching) {
+      setFieldValue("name", null);
+      setFieldValue("email", null);
+      setFieldValue("password", null);
+      setFieldValue("age", null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div>
       <div className="m-auto">
@@ -67,15 +81,14 @@ export default function Register() {
                 type="name"
                 name="name"
                 id="name"
-                placeholder="name"
+                placeholder={errors.name && touched.name ? errors.name
+                 : "Enter name"}
                 className="py-2 bg-sky-100 w-full focus:outline-none placeholder:text-sm"
                 value={values.name}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />
-              {errors.name && touched.name ? (
-                <p className="form-error">{errors.name}</p>
-              ) : null}
+              
               <h1 className="capitalize text-gray-600 text-sm font-bold mt-6 tracking-wide">
                 email address
               </h1>
@@ -83,14 +96,14 @@ export default function Register() {
                 type="email"
                 name="email"
                 id="email"
+                placeholder={errors.email && touched.email ? errors.email
+                 : "Enter email"}
                 className="py-2 bg-sky-100 w-full focus:outline-none placeholder:text-sm"
                 value={values.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />
-              {errors.email && touched.email ? (
-                <p className="form-error">{errors.email}</p>
-              ) : null}
+              
               <h1 className="capitalize text-gray-600 text-sm font-bold mt-6 tracking-wide">
                 password
               </h1>
@@ -98,33 +111,33 @@ export default function Register() {
                 type="password"
                 name="password"
                 id="password"
+                placeholder={errors.password && touched.password ? errors.password : "Enter password"}
                 className="py-2 bg-sky-100 w-full focus:outline-none"
                 value={values.password}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />
-              {errors.password && touched.password ? (
-                <p className="form-error">{errors.password}</p>
-              ) : null}
+              
               <h1 className="capitalize text-gray-600 text-sm font-bold mt-6 tracking-wide">
                 Age
               </h1>
               <input
-                type="number"
+                type="text"
                 name="age"
                 id="age"
+                placeholder={errors.age && touched.age ? errors.age : "Enter age"}
                 className="py-2 bg-sky-100 w-full focus:outline-none"
                 value={values.age}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />
-              {errors.age && touched.age ? (
-                <p className="form-error">{errors.age}</p>
-              ) : null}
+              
             </div>
-            <div className="mt-20 bg-orange-600 rounded-full cursor-pointer capitalize py-3 text-white font-bold block text-center" onClick={handleSubmit}>
-             
-                Register
+            <div
+              className="mt-20 bg-orange-600 rounded-full cursor-pointer capitalize py-3 text-white font-bold block text-center"
+              onClick={handleSubmit}
+            >
+              Register
             </div>
             <div className="mt-10 text-center capitalize text-gray-600 text-md font-bold tracking-wide">
               Already have an account ?
