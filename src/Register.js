@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
-import axios from "axios";
+import { Link } from "react-router-dom";
 import { registerSchema } from "./registerSchema";
 import { useRegisterUserMutation } from "./services/api";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +12,7 @@ export default function Register() {
     password: "",
     age: "",
   };
-
+  const [disabled, setDisabled] = useState(false);
   const [Register, Registerresult] = useRegisterUserMutation();
   const { isSuccess, isFetching, isError, error } = Registerresult;
   const {
@@ -29,6 +29,8 @@ export default function Register() {
     onSubmit: (values, action) => {
       // console.log(values);
       // action.resetForm();
+      setDisabled(true)
+      navigate("/");
       Register({
         name: values.name,
         email: values.email,
@@ -37,12 +39,12 @@ export default function Register() {
       });
     },
   });
-  useEffect(() => {
+  // useEffect(() => {
     
-        navigate("/login");
+  //       navigate("/login");
       
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[])
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // },[])
   useEffect(() => {
     if (isSuccess && !isFetching) {
       setFieldValue("name", null);
@@ -135,19 +137,19 @@ export default function Register() {
             </div>
             <div
               className="mt-20 bg-orange-600 rounded-full cursor-pointer capitalize py-3 text-white font-bold block text-center"
-              onClick={handleSubmit}
+              
             >
-              Register
+              <button onClick={handleSubmit} disabled={disabled}>Register</button>
             </div>
             <div className="mt-10 text-center capitalize text-gray-600 text-md font-bold tracking-wide">
               Already have an account ?
-              <a
+              <Link
                 href="/"
                 className="capitalize text-orange-600 text-md text-right font-bold"
               >
                 {" "}
                 sign in
-              </a>
+              </Link>
             </div>
           </div>
         </div>

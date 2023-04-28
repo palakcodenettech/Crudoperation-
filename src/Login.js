@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import axios from "axios";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import "./App.css";
@@ -7,8 +7,10 @@ import { signUpSchema } from "./signUpSchema";
 import { useUserLoginMutation } from "./services/api";
 import { useEffect, useState } from "react";
 import Loader from "./Loader";
+import  secureLocalStorage  from  "react-secure-storage";
 function Login() {
   const navigate = useNavigate();
+  const [disabled, setDisabled] = useState(false);
   const initialValues = {
     email: "",
     password: "",
@@ -16,21 +18,20 @@ function Login() {
   const [Login, Loginresult] = useUserLoginMutation();
   const [isLoading, setIsLoading] = useState(false);
   const { isSuccess, isFetching, isError, error } = Loginresult;
-  useEffect(() => {
-    let token = localStorage.getItem("token");
-    if (token) {
-      navigate("/adduser");
-      setIsLoading(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // useEffect(() => {
+  //   let token = localStorage.getItem("token");
+  //   if (token) {
+  //     navigate("/adduser");
+  //     setIsLoading(true);
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
   useEffect(() => {
     if (isSuccess && !isFetching) {
       console.log(Loginresult);
-      localStorage.setItem("email", values.email);
-      localStorage.setItem("token", Loginresult.data.data.token);
-      // console.log(Loginresult.data.data.token);
-      // console.log(Loginresult.data.data.token);
+      secureLocalStorage.setItem("email", values.email);
+      secureLocalStorage.setItem("token", Loginresult.data.data.token);
+      console.log(Loginresult.data.data.token,"token");
       navigate("/adduser");
       setIsLoading(true);
     }
@@ -40,11 +41,12 @@ function Login() {
       initialValues,
       validationSchema: signUpSchema,
       onSubmit: (values, action) => {
-        setIsLoading(true);
+        // setIsLoading(true);
         Login({
           email: values?.email,
           password: values?.password,
         });
+        setDisabled(true);
         console.log(values?.email);
         console.log(values?.password);
       },
@@ -121,21 +123,21 @@ function Login() {
                 {/* </form> */}
                 <div
                   className="mt-10 bg-orange-600 rounded-full text-center cursor-pointer "
-                  onClick={handleSubmit}
+                   
                 >
-                  <button className="capitalize py-3 text-white font-bold ">
+                  <button className="capitalize py-3 text-white font-bold " disabled={disabled} onClick={handleSubmit}>
                     sign in
                   </button>
                 </div>
 
                 <div className="mt-10 text-center capitalize text-gray-600 text-md font-bold tracking-wide">
                   don't have an account ?
-                  <a
-                    href="/register"
+                  <Link
+                    to="/register"
                     className="capitalize text-orange-600 text-md text-right font-bold"
                   >
                     sign up
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

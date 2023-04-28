@@ -40,6 +40,8 @@ const styles = {
     border: "none",
   },
 };
+var singleFile = [];
+var file = [];
 export default function AddUser() {
   const initialValues = {
     name: null,
@@ -47,11 +49,15 @@ export default function AddUser() {
     brand: null,
     price: null,
   };
-  const [openModel, setOpenModel] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   const [getdata, setdata] = useState([]);
-  const [selectedImage, setSelectedImage] = useState();
+  const [selectedImage, setSelectedImage] = useState([]);
   const [add, setadd] = useState(false);
   const [GetId, setId] = useState();
+  const [isPreview, setPreview] = useState([]);
+  const [isCount, setCount] = useState(0)
+  const [disabled, setDisabled] = useState(false);
+  const [isAddImage, setAddImage] = useState(false)
   const [AllCars, result] = useLazyGetAllProductsQuery();
   const [DelCars, DelCar] = useDeleteProductMutation();
   const [editCars, EditCar] = useUpdateProductMutation();
@@ -60,63 +66,116 @@ export default function AddUser() {
   const { isSuccess: isDelCarSuccess, isFetching: isDelCarFetching } = DelCar;
   const { isSuccess: isEditCarSuccess, isFetching: isEditCarFetching } =
     EditCar;
-  const [UpdateCar, Updateresult] = useUpdateProductMutation();
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const {
-    isSuccess: isupSuccess,
-    isFetching: isupFetching,
-    isError: isuprError,
-    error: upError,
-  } = Updateresult;
   const [imagUrl, setImgUrl] = useState("");
-  // This function will be triggered when the "Remove This Image" button is clicked
 
-  // const userType = window.localStorage.getItem('email')
-  // let email;
-  // email = userType === "email" ? true : false
-  // let Authorization = { 'token': Authorization }
 
-  // Authorization.token ? <Login /> : <AddUser to="/" />
 
   function Insert() {
-    console.log();
-    // InsertNewCar(formdata);
-    // console.log(CarResult);
-    // setadd(false);
-    // addsweetalert();
+    var formdata = new FormData();
+    formdata.append("name", values.name);
+    formdata.append("brand", values.brand);
+    formdata.append("price", values.price);
+    formdata.append("color", values.color);
+    for (let i = 0; i < Object.keys(values.car_file).length; i++) {
+      console.log(values.car_file);
+      formdata.append("car_file", values.car_file[i]);
+    }
+
+    swal({
+      text: "Your field is successfully added",
+      icon: "success",
+      buttons: true,
+      dangerMode: true,
+    }).then((willAdd) => {
+      if (willAdd) {
+        InsertNewCar(formdata)
+        setIsLoading(true);
+        setIsUpdating(true)
+      }
+    });
   }
-  const del = (id) => {
-    sweetalert(id);
-  };
   const edit = (data) => {
+    setSelectedImage([]);
     console.log(data);
+    setPreview(data.image)
+
     setFieldValue("name", data.name);
     setFieldValue("color", data.color);
     setFieldValue("brand", data.brand);
     setFieldValue("price", data.price);
-    setFieldValue("car_file", data.car_file);
+    console.log(data);
+    data.image.forEach((item) => {
+      setFieldValue("car_file", `${process.env.REACT_APP_BASE_URL}file/${item}`);
+
+    })
+
+    setImgUrl(
+      `${process.env.REACT_APP_BASE_URL}file/${data.image}`
+    );
 
     setId(data._id);
   };
   const confirm = () => {
     var formdata = new FormData();
-    formdata.append("name", initialValues.name);
-    formdata.append("brand", initialValues.brand);
-    formdata.append("price", initialValues.price);
-    formdata.append("color", initialValues.color);
-    formdata.append("car_file", initialValues.car_file);
 
-    // editCars(update);
-    // window.location.reload();
+    for (let i = 0; i < Object.keys(values.car_file).length; i++) {
+      formdata.append("car_file", values.car_file[i]);
+    }
+    console.log(formdata.data);
+    console.log(values.car_file, "confirm");
+
+    formdata.append("name", values.name);
+    formdata.append("brand", values.brand);
+    formdata.append("price", values.price);
+    formdata.append("color", values.color);
+
+    const update = {
+      formdata,
+      GetId,
+    };
+    setImgUrl(
+      `${process.env.REACT_APP_BASE_URL}file/${values.image}`
+    );
+    setIsUpdating(true);
+    setIsLoading(true);
+
+    swal({
+      text: "Your Record Updated",
+      icon: "success",
+      buttons: true,
+      dangerMode: true,
+    }).then((willAdd) => {
+      if (willAdd) {
+        editCars(update);
+        setIsLoading(true);
+        setIsUpdating(true)
+      }
+    })
+
     setId("");
-    editsweetalert();
-    console.log(EditCar);
-    console.log(values.image);
-    console.log(values.image_url);
-    console.log(values.name);
     AllCars({});
   };
+  const Delete = (id) => {
+    swal({
+      title: "Are you sure?",
+      text: "Once deleted, you will not be able to recover this imaginary file!",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+    }).then((willDelete) => {
+      if (willDelete) {
+        DelCars(id);
+        setIsLoading(true);
+        setIsUpdating(true)
+
+
+      }
+    });
+  };
+
+
 
   function handlesubmit() {
     window.location.href = "/adduser";
@@ -134,18 +193,8 @@ export default function AddUser() {
     initialValues,
     validationSchema: addUserSchema,
     onSubmit: (values, action) => {
-      var formdata = new FormData();
-      formdata.append("name", values.name);
-      formdata.append("brand", values.brand);
-      formdata.append("price", values.price);
-      formdata.append("color", values.color);
-      formdata.append("car_file", values.car_file);
-      const update = {
-        formdata,
-        GetId,
-      };
       console.log(values.name.length, "if");
-      if (values.name.length <= 2 ) {
+      if (values.name.length <= 2) {
         setErrors({ name: "to short" })
         console.log("condition if");
       }
@@ -154,9 +203,8 @@ export default function AddUser() {
         console.log("condition if");
       }
       else {
-        addsweetalert();
+        Insert();
         setadd(false);
-        editCars(update);
       }
 
     },
@@ -200,72 +248,10 @@ export default function AddUser() {
     }
   }, [isDelCarSuccess, isDelCarFetching]);
 
-  function sweetalert(id) {
-    swal({
-      title: "Are you sure?",
-      text: "Once deleted, you will not be able to recover this imaginary file!",
-      icon: "warning",
-      buttons: true,
-      dangerMode: true,
-    }).then((willDelete) => {
-      if (willDelete) {
-        DelCars(id);
-        setIsLoading(true);
-        setIsUpdating(true)
-
-
-      }
-    });
-  }
-  function editsweetalert() {
-    var formdata = new FormData();
-    formdata.append("name", values.name);
-    formdata.append("brand", values.brand);
-    formdata.append("price", values.price);
-    formdata.append("color", values.color);
-    formdata.append("car_file", values.car_file);
-
-    swal({
-      text: "Your field is Edit",
-      icon: "success",
-      buttons: true,
-      dangerMode: true,
-    }).then((willEdit) => {
-      if (willEdit) {
-        const update = {
-          formdata,
-          GetId,
-        };
-        editCars(update);
-        setIsUpdating(true);
-        setIsLoading(true);
-        // window.location.reload();
-      }
-    });
-  }
-  function addsweetalert() {
-    var formdata = new FormData();
-    formdata.append("name", values.name);
-    formdata.append("brand", values.brand);
-    formdata.append("price", values.price);
-    formdata.append("color", values.color);
-    formdata.append("car_file", values.car_file);
-
-    swal({
-      text: "Your field is successfully added",
-      icon: "success",
-      buttons: true,
-      dangerMode: true,
-    }).then((willAdd) => {
-      if (willAdd) {
-        InsertNewCar(formdata)
-        setIsLoading(true);
-        setIsUpdating(true)
-      }
-    });
-  }
   const removeSelectedImage = () => {
-    setSelectedImage();
+    setSelectedImage([]);
+    file = []
+    singleFile = []
   };
 
   return (
@@ -277,6 +263,25 @@ export default function AddUser() {
       ) : (
         <div>
           <div className="flex justify-between mb-10">
+            {add ? null : (
+              <div className="inline-flex">
+                {/* <button
+                  onClick={handlesubmit}
+                  className="btn border border-solid border-black"
+                >
+                  <Link to="/" className="no-underline">
+                    Login
+
+                  </Link>
+                </button> */}
+                <br />
+                <button className="btn btn-primary">
+                  <Link to="/dashboard" className="block text-[#fff] no-underline">
+                    Dashboard
+                  </Link>
+                </button>
+              </div>
+            )}
             {add ? null : (
               <button
                 className="btn btn-primary"
@@ -297,25 +302,9 @@ export default function AddUser() {
                 Add New Car
               </button>
             )}
-            {add ? null : (
-              <div className="inline-flex">
-                <button
-                  onClick={handlesubmit}
-                  className="btn border border-solid border-black"
-                >
-                  Login
-                </button>
-                <br />
-                <button className="btn btn-primary">
-                  <Link to="/dashboard" className="block text-[#fff] no-underline">
-                    Dashboard
-                  </Link>
-                </button>
-              </div>
-            )}
+
           </div>
           <table class="table table-striped">
-            {/* <thead> */}
             {add ? null : (
               <tr id="row">
                 <th>Name</th>
@@ -327,8 +316,6 @@ export default function AddUser() {
                 <th>Edit</th>
               </tr>
             )}
-            {/* </thead> */}
-
             {add ? (
               <div>
                 <div>
@@ -390,23 +377,46 @@ export default function AddUser() {
                     </td>
                     <td>
                       <input
-                        name="file"
+                        name="car_file"
                         type="file"
-                        multiple
-                        onChange={(event) => {
-                          setFieldValue("car_file", event.currentTarget.files[0]);
+                        onChange={(e) => {
+                          singleFile.push(e.target.files[0]);
+                          setFieldValue("car_file", singleFile);
+                          file.push(URL.createObjectURL(e.target.files[0]));
                         }}
                       />
+
+
+                      <button className="btn btn-primary" onClick={() => { setAddImage(true); setCount(isCount + 1); console.log(isCount) }}><i class="fa-solid fa-plus mr-2"></i>Add Image</button>
+                      {isAddImage
+                        ? Array(isCount)
+                          ?.fill("-")
+                          ?.map(() => {
+                            return (
+                              <>
+                                <input
+                                  name="car_file"
+                                  type="file"
+                                  onChange={(e) => {
+                                    console.log(singleFile);
+                                    console.log(values);
+                                    singleFile.push(e.target.files[0]);
+                                    setFieldValue("car_file", singleFile);
+                                    file.push(URL.createObjectURL(e.target.files[0]));
+                                  }}
+                                />
+                              </>
+                            );
+                          })
+                        : null}
                     </td>
                     <td>
                       <div onClick={handleSubmit}>
                         <button
                           className="btn btn-primary"
-                          onClick={Insert}
-                          disabled={isLoading}
+                          disabled={disabled}
                         >
                           {isUpdating ? (
-                            // <i className="fa fa-spinner animate-spin mr-2"></i>
                             null
                           ) : (
                             <i class="fa-solid fa-plus mr-2"></i>
@@ -440,7 +450,7 @@ export default function AddUser() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                               />
-                             
+
                             </div>
                           ) : (
                             <span>{i?.name}</span>
@@ -508,68 +518,118 @@ export default function AddUser() {
                           )}
                         </td>
                         <td>
-                          {GetId === i._id ? (
-                            <>
-                              <input
-                                name="file"
-                                type="file"
-                                onChange={(event) => {
-                                  setFieldValue(
-                                    "car_file",
-                                    event.currentTarget.files[0]
-                                  );
-                                  setSelectedImage(event.currentTarget.files[0]);
-                                }}
-                              />
-
-                              {!selectedImage ? null : (
-                                <div style={styles.preview}>
-                                  <img
-                                    src={URL.createObjectURL(selectedImage)}
-                                    style={styles.image}
-                                    alt="Image"
-                                    height="150px"
-                                    width="150px"
-                                  />
-                                  <button
-                                    onClick={removeSelectedImage}
-                                    style={styles.delete}
-                                  >
-                                    Remove This Image
-                                  </button>
-                                </div>
-                              )}
-                              <div>
-                                {!selectedImage || selectedImage == "" ? (
+                          {GetId === i._id ?
+                            (
+                              <>
+                                <input
+                                  name="file"
+                                  type="file"
+                                  onChange={(event) => {
+                                    singleFile.push(event.target.files[0])
+                                    setFieldValue("car_file", singleFile);
+                                    file.push(URL.createObjectURL(event.target.files[0]))
+                                    setSelectedImage(event.currentTarget.files);
+                                    console.log(event.currentTarget.files);
+                                  }}
+                                />
+                                <button className="btn btn-primary" onClick={() => { setAddImage(true); setCount(isCount + 1); console.log(isCount) }}><i class="fa-solid fa-plus mr-2"></i>Add Image</button>
+                                {isAddImage
+                                  ? Array(isCount)
+                                    ?.fill("-")
+                                    ?.map(() => {
+                                      return (
+                                        <>
+                                          <input
+                                            name="car_file"
+                                            type="file"
+                                            onChange={(e) => {
+                                              singleFile.push(e.target.files[0]);
+                                              setFieldValue("car_file", singleFile);
+                                              file.push(URL.createObjectURL(e.target.files[0]));
+                                            }}
+                                          />
+                                        </>
+                                      );
+                                    })
+                                  : null}
+                                {file.length == 0 ? null : (
                                   <div style={styles.preview}>
-                                    <img
-                                      src={`http://192.168.1.10:8001/file/${i.image}`}
-                                      style={styles.image}
-                                      alt="Thumb"
-                                      height="150px"
-                                      width="150px"
-                                    />
+
+
+                                    {
+                                      file.map((j) => {
+                                        return (
+                                          <img
+                                            src={j}
+                                            style={styles.image}
+                                            alt="Image"
+                                            height="150px"
+                                            width="150px"
+                                          />
+                                        )
+                                      })
+                                    }
+                                    <button
+                                      onClick={removeSelectedImage}
+                                      style={styles.delete}
+                                    >
+                                      Remove This Image
+                                    </button>
+
                                   </div>
-                                ) : (
-                                  ""
                                 )}
+                                <div>
+                                  {!selectedImage || selectedImage == "" ? (
+                                    <div>
+                                      <div style={styles.preview}>
+
+                                        {
+                                          i.image.map((j) => {
+                                            return (
+                                              <img
+                                                src={`${process.env.REACT_APP_BASE_URL}file/${j}`}
+                                                alt="image"
+                                                height="150px"
+                                                width="150px"
+                                                style={styles.image}
+                                              />
+                                            )
+                                          })
+                                        }
+                                      </div>
+
+                                    </div>
+                                  ) : (
+                                    ""
+                                  )}
+
+                                </div>
+                              </>
+                            )
+                            :
+                            (
+
+                              <div>
+                                {
+                                  i.image.map((j) => {
+                                    return (
+                                      <img
+                                        src={`${process.env.REACT_APP_BASE_URL}file/${j}`}
+                                        alt="image"
+                                        height="150px"
+                                        width="150px"
+                                        onClick={() => {
+                                          setOpenModal(true);
+
+                                          edit(i);
+                                        }}
+                                      />
+                                    )
+                                  })
+                                }
                               </div>
-                            </>
-                          ) : (
-                            <img
-                              src={`http://192.168.1.10:8001/file/${i.image}`}
-                              alt="image"
-                              height="150px"
-                              width="150px"
-                              onClick={() => {
-                                setOpenModel(true);
-                                setImgUrl(
-                                  `${process.env.REACT_APP_PUBLIC_URL}/file/${i.image}`
-                                );
-                                edit(i);
-                              }}
-                            />
-                          )}
+                            )
+                          }
                         </td>
                         <td>
 
@@ -579,7 +639,7 @@ export default function AddUser() {
                             <button
                               className="btn btn-danger"
                               onClick={() => {
-                                del(i._id);
+                                Delete(i._id);
                               }}
                             >
                               {isUpdating ? (
@@ -642,8 +702,8 @@ export default function AddUser() {
           modal: "customModal",
           closeIcon: "color",
         }}
-        open={openModel}
-        onClose={() => setOpenModel(false)}
+        open={openModal}
+        onClose={() => setOpenModal(false)}
         center
         animationDuration={300}
         closeOnEsc={false}
@@ -662,28 +722,97 @@ export default function AddUser() {
                 name="file"
                 type="file"
                 onChange={(event) => {
-                  setFieldValue("car_file", event.currentTarget.files[0]);
-                  setSelectedImage(event.currentTarget.files[0]);
+                  singleFile.push(event.target.files[0])
+                  setFieldValue("car_file", singleFile);
+                  file.push(URL.createObjectURL(event.target.files[0]))
+
+                  // }
+                  console.log(selectedImage);
+                  setSelectedImage(file);
+                  console.log(selectedImage);
+
                 }}
               />
-              {!selectedImage ? (
+
+              {file.length == 0 ? (
                 <div style={styles.preview}>
-                  <img src={imagUrl} style={styles.image} alt="Thumb" />
+                  {
+                    isPreview.map((image) => {
+                      return (
+                        <img
+                          style={styles.image}
+                          src={`${process.env.REACT_APP_BASE_URL}file/${image}`}
+                          alt="thumb"
+                          height="150px"
+                          width="150px"
+                        />
+                      )
+                    })}
+                  <button className="btn btn-primary" onClick={() => { setAddImage(true); setCount(isCount + 1); console.log(isCount) }}><i class="fa-solid fa-plus mr-2"></i>Add Image</button>
+                  {
+                    isAddImage
+                      ? Array(isCount)
+                        ?.fill("-")
+                        ?.map(() => {
+                          return (
+                            <>
+                              <input
+                                name="car_file"
+                                type="file"
+                                onChange={(e) => {
+                                  singleFile.push(e.target.files[0]);
+                                  setFieldValue("car_file", singleFile);
+                                  file.push(URL.createObjectURL(e.target.files[0]));
+                                }}
+                              />
+                            </>
+                          );
+                        })
+                      : null}
                 </div>
               ) : (
                 <div style={styles.preview}>
-                  <img
-                    src={URL.createObjectURL(selectedImage)}
-                    style={styles.image}
-                    alt=""
-                  />
+                  {
+                    file.map((image) => {
+                      return (
+                        <img
+                          src={(image)}
+                          style={styles.image}
+                          alt="image"
+                          height="150px"
+                          width="150px"
+                        />
+
+                      )
+                    })
+                  }
                   <button onClick={removeSelectedImage} style={styles.delete}>
                     Remove This Image
                   </button>
+                  <button className="btn btn-primary" onClick={() => { setAddImage(true); setCount(isCount + 1); console.log(isCount) }}><i class="fa-solid fa-plus mr-2"></i>Add Image</button>
+                  {isAddImage
+                    ? Array(isCount)
+                      ?.fill("-")
+                      ?.map(() => {
+                        return (
+                          <>
+                            <input
+                              name="car_file"
+                              type="file"
+                              onChange={(e) => {
+                                singleFile.push(e.target.files[0]);
+                                setFieldValue("car_file", singleFile);
+                                file.push(URL.createObjectURL(e.target.files[0]));
+                              }}
+                            />
+                          </>
+                        );
+                      })
+                    : null}
                   <button
-                    onClick={(i) => {
+                    onClick={() => {
                       confirm(GetId);
-                      setOpenModel(false);
+                      setOpenModal(false);
                     }}
                   >
                     Edit

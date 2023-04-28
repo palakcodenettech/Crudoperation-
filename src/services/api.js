@@ -1,8 +1,9 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import  secureLocalStorage  from  "react-secure-storage";
 const baseQuery = fetchBaseQuery({
   baseUrl: process.env.REACT_APP_BASE_URL,
   prepareHeaders: (headers) => {
-    let token = localStorage.getItem("token");
+    let token = secureLocalStorage.getItem("token");
     headers.set("Authorization", `Bearer ${token}`);
     return headers;
   },
