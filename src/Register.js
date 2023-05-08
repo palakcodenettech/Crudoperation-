@@ -14,7 +14,7 @@ export default function Register() {
   };
   const [disabled, setDisabled] = useState(false);
   const [Register, Registerresult] = useRegisterUserMutation();
-  const { isSuccess, isFetching, isError, error } = Registerresult;
+  const { isSuccess, isFetching } = Registerresult;
   const {
     values,
     errors,
@@ -39,12 +39,6 @@ export default function Register() {
       });
     },
   });
-  // useEffect(() => {
-    
-  //       navigate("/login");
-      
-  // // eslint-disable-next-line react-hooks/exhaustive-deps
-  // },[])
   useEffect(() => {
     if (isSuccess && !isFetching) {
       setFieldValue("name", null);

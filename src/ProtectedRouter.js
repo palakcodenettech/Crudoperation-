@@ -9,18 +9,11 @@ const ProtectedRouter = () => {
   const token = secureLocalStorage.getItem("token");
   if (token) {
     let decodedToken = jwt_decode(token);
-    // console.log("Decoded Token", decodedToken);
     let currentDate = new Date();
-    var result = false;
-    // console.log("calll");
     if (decodedToken.exp * 1000 < currentDate.getTime()) {
-      // console.log("Token expired.");
       window.localStorage.clear();
       navigate("/");
-    } else {
-      // console.log("Valid token");
-      result = true;
-    }
+    } 
   } else {
     <Navigate to="/" />;
   }

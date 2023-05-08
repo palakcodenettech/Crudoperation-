@@ -6,6 +6,7 @@ import Dashboard from "./Dashboard";
 import AddUser from "./AddUser";
 import Register from "./Register";
 import ProtectedRoute from "./ProtectedRouter";
+import Profile from "./Dashboard/Profile";
 
 function App() {
   return (
@@ -17,11 +18,12 @@ function App() {
         <Route path="/Register" element={(window.localStorage.getItem('email') !== null) ? <AddUser /> : <Register />}/>
       </Routes> */}
       <Routes>
-          <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/" element={<Login />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/Adduser" element={<AddUser />} />
           <Route path="/Dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
       </Routes>
     </div>

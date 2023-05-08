@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -17,15 +18,8 @@ function Login() {
   };
   const [Login, Loginresult] = useUserLoginMutation();
   const [isLoading, setIsLoading] = useState(false);
-  const { isSuccess, isFetching, isError, error } = Loginresult;
-  // useEffect(() => {
-  //   let token = localStorage.getItem("token");
-  //   if (token) {
-  //     navigate("/adduser");
-  //     setIsLoading(true);
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
+  const { isSuccess, isFetching } = Loginresult;
+
   useEffect(() => {
     if (isSuccess && !isFetching) {
       console.log(Loginresult);
@@ -60,11 +54,11 @@ function Login() {
         <div>
           <div className="m-auto">
             <div className="flex justify-between sm:justify-around">
-              <div className="image w-1/2 block xl:block lg:block md:block max-sm:hidden max-xs:hidden">
+              <div className="image w-1/2 hidden lg:block">
                 <img
                   src={require("./images/main-image.jpg")}
                   alt=""
-                  className="w-full xs:hidden h-[100vh]"
+                  className="w-full h-[100vh]"
                 />
               </div>
               <div className="login-content py-6 xl:px-32 lg:px-12 md:px-12 max-sm:px-9 xl:w-1/2 lg:w-1/2 md:w-1/2 max-sm:w-full max-xs:w-full">

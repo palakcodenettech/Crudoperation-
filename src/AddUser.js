@@ -15,33 +15,13 @@ import {
   useAddProductMutation,
 } from "./services/api";
 import { addUserSchema } from "./addUserSchema";
-import { Link } from "react-router-dom";
 import Loader from "./Loader";
-import './all.min.css'
-const styles = {
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: 50,
-  },
-  preview: {
-    marginTop: 50,
-    display: "flex",
-    flexDirection: "column",
-  },
-  image: { maxWidth: "100%", maxHeight: 320 },
-  delete: {
-    cursor: "pointer",
-    padding: 15,
-    background: "red",
-    color: "white",
-    border: "none",
-  },
-};
-var singleFile = [];
-var file = [];
+import "./all.min.css";
+import ImageUploading from "./ImageUploading";
+import Header from "./Dashboard/Header";
+import Sidebar from "./Dashboard/Sidebar";
+import Footer from "./Dashboard/Footer";
+
 export default function AddUser() {
   const initialValues = {
     name: null,
@@ -51,13 +31,11 @@ export default function AddUser() {
   };
   const [openModal, setOpenModal] = useState(false);
   const [getdata, setdata] = useState([]);
-  const [selectedImage, setSelectedImage] = useState([]);
   const [add, setadd] = useState(false);
   const [GetId, setId] = useState();
-  const [isPreview, setPreview] = useState([]);
-  const [isCount, setCount] = useState(0)
+  const [isImage, setImage] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [disabled, setDisabled] = useState(false);
-  const [isAddImage, setAddImage] = useState(false)
   const [AllCars, result] = useLazyGetAllProductsQuery();
   const [DelCars, DelCar] = useDeleteProductMutation();
   const [editCars, EditCar] = useUpdateProductMutation();
@@ -66,11 +44,11 @@ export default function AddUser() {
   const { isSuccess: isDelCarSuccess, isFetching: isDelCarFetching } = DelCar;
   const { isSuccess: isEditCarSuccess, isFetching: isEditCarFetching } =
     EditCar;
-  const [isLoading, setIsLoading] = useState(false);
+  const { isSuccess, isFetching } =
+    result;
+  const [isLoading, setIsLoader] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [imagUrl, setImgUrl] = useState("");
-
-
+  // eslint-disable-next-line no-unused-vars
 
   function Insert() {
     var formdata = new FormData();
@@ -78,9 +56,9 @@ export default function AddUser() {
     formdata.append("brand", values.brand);
     formdata.append("price", values.price);
     formdata.append("color", values.color);
-    for (let i = 0; i < Object.keys(values.car_file).length; i++) {
+    for (let i = 0; i < values.car_file.length; i++) {
       console.log(values.car_file);
-      formdata.append("car_file", values.car_file[i]);
+      formdata.append("car_file", values.car_file[i].image);
     }
 
     swal({
@@ -90,42 +68,54 @@ export default function AddUser() {
       dangerMode: true,
     }).then((willAdd) => {
       if (willAdd) {
-        InsertNewCar(formdata)
-        setIsLoading(true);
-        setIsUpdating(true)
+        InsertNewCar(formdata);
+        setIsLoader(true);
+        setIsUpdating(true);
       }
     });
   }
-  const edit = (data) => {
-    setSelectedImage([]);
-    console.log(data);
-    setPreview(data.image)
 
+  const edit = (data) => {
     setFieldValue("name", data.name);
     setFieldValue("color", data.color);
     setFieldValue("brand", data.brand);
     setFieldValue("price", data.price);
-    console.log(data);
-    data.image.forEach((item) => {
-      setFieldValue("car_file", `${process.env.REACT_APP_BASE_URL}file/${item}`);
+    let arrayImage = [];
 
-    })
-
-    setImgUrl(
-      `${process.env.REACT_APP_BASE_URL}file/${data.image}`
-    );
-
+    getDataBlob(`${process.env.REACT_APP_BASE_URL}file/${data.image}`);
+    async function getDataBlob(url) {
+      var res = await fetch(url);
+      var blob = await res.blob();
+      var base64img = await parseURI(blob);
+      console.log(base64img);
+    }
+    async function parseURI(d) {
+      var reader = new FileReader();
+      reader.readAsDataURL(d);
+      return new Promise((res, rej) => {
+        reader.onload = (e) => {
+          for (let i = 0; i < data.image.length; i++) {
+            let pushImage = {
+              image: e.target.result,
+            };
+            console.log(e.target.result);
+            console.log(arrayImage);
+            arrayImage.push(pushImage);
+          }
+        };
+      });
+    }
+    console.log(isImage);
+    setImage(arrayImage);
     setId(data._id);
   };
   const confirm = () => {
     var formdata = new FormData();
 
-    for (let i = 0; i < Object.keys(values.car_file).length; i++) {
-      formdata.append("car_file", values.car_file[i]);
+    for (let i = 0; i < values.car_file.length; i++) {
+      formdata.append("car_file", values.car_file[i].image);
     }
-    console.log(formdata.data);
     console.log(values.car_file, "confirm");
-
     formdata.append("name", values.name);
     formdata.append("brand", values.brand);
     formdata.append("price", values.price);
@@ -135,11 +125,8 @@ export default function AddUser() {
       formdata,
       GetId,
     };
-    setImgUrl(
-      `${process.env.REACT_APP_BASE_URL}file/${values.image}`
-    );
     setIsUpdating(true);
-    setIsLoading(true);
+    setIsLoader(true);
 
     swal({
       text: "Your Record Updated",
@@ -149,10 +136,10 @@ export default function AddUser() {
     }).then((willAdd) => {
       if (willAdd) {
         editCars(update);
-        setIsLoading(true);
-        setIsUpdating(true)
+        setIsLoader(true);
+        setIsUpdating(true);
       }
-    })
+    });
 
     setId("");
     AllCars({});
@@ -167,19 +154,12 @@ export default function AddUser() {
     }).then((willDelete) => {
       if (willDelete) {
         DelCars(id);
-        setIsLoading(true);
-        setIsUpdating(true)
-
-
+        setIsLoader(true);
+        setIsUpdating(true);
       }
     });
   };
 
-
-
-  function handlesubmit() {
-    window.location.href = "/adduser";
-  }
   const {
     values,
     errors,
@@ -192,21 +172,20 @@ export default function AddUser() {
   } = useFormik({
     initialValues,
     validationSchema: addUserSchema,
+
+
     onSubmit: (values, action) => {
       console.log(values.name.length, "if");
       if (values.name.length <= 2) {
-        setErrors({ name: "to short" })
+        setErrors({ name: "to short" });
         console.log("condition if");
-      }
-      else if (values.name.length > 25) {
-        setErrors({ name: "to long" })
+      } else if (values.name.length > 25) {
+        setErrors({ name: "to long" });
         console.log("condition if");
-      }
-      else {
+      } else {
         Insert();
         setadd(false);
       }
-
     },
     handleChange(e) {
       initialValues({
@@ -215,487 +194,423 @@ export default function AddUser() {
       });
     },
   });
-  const { isSuccess, isFetching } = result;
-
   useEffect(() => {
     AllCars({});
-  }, []);
+
+  }, [])
+
   useEffect(() => {
     if (isSuccess && !isFetching) {
-      console.log(result.data);
       setdata(result?.data.length > 0 ? result.data : []);
+      setIsLoader(false);
+    }
+    if (isFetching) {
+      setIsLoader(true)
     }
   }, [isSuccess, isFetching]);
   useEffect(() => {
     if (isCarSuccess && !isCarFetching) {
       AllCars({});
-      setIsLoading(false);
-      setIsUpdating(false)
+      setIsLoader(false);
+      setIsUpdating(false);
     }
   }, [isCarSuccess, isCarFetching]);
   useEffect(() => {
     if (isEditCarSuccess && !isEditCarFetching) {
       AllCars({});
       setIsUpdating(false);
-      setIsLoading(false);
+      setIsLoader(false);
     }
   }, [isEditCarSuccess, isEditCarFetching]);
   useEffect(() => {
     if (isDelCarSuccess && !isDelCarFetching) {
       AllCars({});
       setIsUpdating(false);
-      setIsLoading(false);
+      setIsLoader(false);
     }
   }, [isDelCarSuccess, isDelCarFetching]);
 
-  const removeSelectedImage = () => {
-    setSelectedImage([]);
-    file = []
-    singleFile = []
-  };
-
   return (
-    <div className="p-10">
+    <div>
+
       {isLoading ? (
         <div>
           <Loader />
         </div>
       ) : (
-        <div>
-          <div className="flex justify-between mb-10">
-            {add ? null : (
-              <div className="inline-flex">
-                {/* <button
-                  onClick={handlesubmit}
-                  className="btn border border-solid border-black"
-                >
-                  <Link to="/" className="no-underline">
-                    Login
-
-                  </Link>
-                </button> */}
-                <br />
-                <button className="btn btn-primary">
-                  <Link to="/dashboard" className="block text-[#fff] no-underline">
-                    Dashboard
-                  </Link>
-                </button>
-              </div>
-            )}
-            {add ? null : (
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  setadd(true);
-                  values.name = "";
-                  values.brand = "";
-                  values.color = "";
-                  values.price = "";
-                }}
-              >
-                {isUpdating ? (
-                  <i className="fa fa-spinner animate-spin mr-2"></i>
-                ) : (
-                  // <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
-                  null
-                )}
-                Add New Car
-              </button>
-            )}
-
-          </div>
-          <table class="table table-striped">
-            {add ? null : (
-              <tr id="row">
-                <th>Name</th>
-                <th>Color</th>
-                <th>Brand</th>
-                <th>Price</th>
-                <th>Upload</th>
-                <th>Delete</th>
-                <th>Edit</th>
-              </tr>
-            )}
-            {add ? (
+        <>
+          <Header />
+          <Sidebar />
+          <div className="pt-[7.5rem]   xl:ml-[18.474rem] lg:ml-[8.600rem] md:ml-[8.600rem] sm:my-0 sm:px-2">
+            <div className="dashboard-content px-[15px] pt-[15px] xl:px-[40px] xl:pt-[40px] lg:px-[40px] lg:pt-[40px] md:px-[20px] md:pt-[20px] ">
               <div>
-                <div>
-                  <tr id="row">
-                    <td>
-                      <input
-                        type="text"
-                        placeholder={
-                          errors.name && touched.name ? "Please Enter car name" : "Enter name"
-                        }
-                        name="name"
-                        value={values.name}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                      />
-                      {errors.name && touched.name ? <p>{errors.name}</p> : ""}
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        name="color"
-                        placeholder={
-                          errors.color && touched.color
-                            ? errors.color
-                            : "Enter color"
-                        }
-                        value={values.color}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        placeholder={
-                          errors.brand && touched.brand
-                            ? errors.brand
-                            : "Enter Brand"
-                        }
-                        value={values.brand}
-                        name="brand"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        placeholder={
-                          errors.price && touched.price
-                            ? errors.price
-                            : "Enter Price"
-                        }
-                        value={values.price}
-                        name="price"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        name="car_file"
-                        type="file"
-                        onChange={(e) => {
-                          singleFile.push(e.target.files[0]);
-                          setFieldValue("car_file", singleFile);
-                          file.push(URL.createObjectURL(e.target.files[0]));
-                        }}
-                      />
+                {add ? null : (
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setadd(true);
+                      values.name = "";
+                      values.brand = "";
+                      values.color = "";
+                      values.price = "";
+                    }}
+                  >
+                    <span className="flex items-center">
+                      {isUpdating ? null : (
+                        <i class="fa-solid fa-plus"></i>
+                      )}
+                      <span className="hidden xl:block lg:block">New</span>
+                    </span>
+                  </button>
+                )}
+
+                <table class="table  table-responsive">
+                  {add ? null : (
+                    <tr id="row" className="text-[10px] text-center xl:text-[16px] lg:text-[16px] md:text-[16px]">
+                      <th>Name</th>
+                      <th>Color</th>
+                      <th>Brand</th>
+                      <th>Price</th>
+                      <th>Upload</th>
+                      <th>Delete</th>
+                      <th>Edit</th>
+                    </tr>
+                  )}
+                  {add ? (
+                    <div className="border-transparent">
+                      <div className="text-10px text-center xl:text-[16px] lg:text-[16px] md:text-[16px]">
+                        <input
+                          type="text"
+                          placeholder={
+                            errors.name && touched.name
+                              ? "Please Enter car name"
+                              : "Enter name"
+                          }
+                          name="name"
+                          value={values.name}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          className="border-transparent"
+                        />
+                        {errors.name && touched.name ? (
+                          <p>{errors.name}</p>
+                        ) : (
+                          ""
+                        )}
+                        <input
+                          type="text"
+                          name="color"
+                          placeholder={
+                            errors.color && touched.color
+                              ? errors.color
+                              : "Enter color"
+                          }
+                          value={values.color}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          className="border-transparent"
+                        />
 
 
-                      <button className="btn btn-primary" onClick={() => { setAddImage(true); setCount(isCount + 1); console.log(isCount) }}><i class="fa-solid fa-plus mr-2"></i>Add Image</button>
-                      {isAddImage
-                        ? Array(isCount)
-                          ?.fill("-")
-                          ?.map(() => {
-                            return (
-                              <>
-                                <input
-                                  name="car_file"
-                                  type="file"
-                                  onChange={(e) => {
-                                    console.log(singleFile);
-                                    console.log(values);
-                                    singleFile.push(e.target.files[0]);
-                                    setFieldValue("car_file", singleFile);
-                                    file.push(URL.createObjectURL(e.target.files[0]));
-                                  }}
-                                />
-                              </>
-                            );
-                          })
-                        : null}
-                    </td>
-                    <td>
-                      <div onClick={handleSubmit}>
-                        <button
-                          className="btn btn-primary"
-                          disabled={disabled}
-                        >
-                          {isUpdating ? (
-                            null
-                          ) : (
-                            <i class="fa-solid fa-plus mr-2"></i>
-                          )}
-                          Add new
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </div>
-              </div>
-            ) : (
-              <tbody>
-                {
+                        <input
+                          type="text"
+                          placeholder={
+                            errors.brand && touched.brand
+                              ? errors.brand
+                              : "Enter Brand"
+                          }
+                          value={values.brand}
+                          name="brand"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          className="border-transparent"
+                        />
 
-                  getdata?.map((i, index) => {
-                    return (
-                      <tr>
-                        <td key={index}>
-                          {GetId === i._id ? (
-                            <div>
-                              <input
-                                name="name"
-                                type="text"
-                                placeholder={
-                                  errors.name && touched.name
-                                    ? errors.color
-                                    : "Enter name"
-                                }
-                                value={values.name}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
+
+                        <input
+                          type="text"
+                          placeholder={
+                            errors.price && touched.price
+                              ? errors.price
+                              : "Enter Price"
+                          }
+                          value={values.price}
+                          name="price"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          className="border-transparent"
+                        />
+
+
+                        <div>
+                          <button
+                            className="btn btn-primary border-transparent"
+                            onClick={() => {
+                              setImage([...isImage, { image: "" }]);
+                            }}
+                          >
+                            <span className="flex items-center">
+                              {isUpdating ? null : (
+                                <i class="fa-solid fa-plus mr-2"></i>
+                              )}
+                              <span className="hidden xl:block lg:block">Image</span>
+                            </span>
+                          </button>
+                          <span>
+                            {isImage.map((e, i) => (
+                              <ImageUploading
+                                onUploadImage={(e) => {
+                                  let s = isImage;
+                                  s[i] = {
+                                    image: e.target.files[0],
+                                  };
+                                  setImage([...s]);
+                                  setFieldValue("car_file", s);
+                                  console.log(isImage);
+                                }}
+                                showImage={e}
+                                removeSelectedImage={(id) => {
+                                  let s = isImage;
+                                  s[i] = { image: "" };
+                                  // setFieldValue("car_file",s)
+                                  setImage(s.filter((img, i) => i !== img));
+                                  console.log(isImage);
+                                }}
                               />
-
-                            </div>
-                          ) : (
-                            <span>{i?.name}</span>
-                          )}
-                        </td>
-                        <td>
-                          {GetId === i._id ? (
-                            <div>
-                              <input
-                                name="color"
-                                type="text"
-                                placeholder={
-                                  errors.color && touched.color
-                                    ? errors.color
-                                    : "Enter color"
-                                }
-                                value={values.color}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                              />
-                            </div>
-                          ) : (
-                            <span>{i?.color}</span>
-                          )}
-                        </td>
-                        <td>
-                          {GetId === i._id ? (
-                            <div>
-                              <input
-                                name="brand"
-                                type="text"
-                                placeholder={
-                                  errors.brand && touched.brand
-                                    ? errors.brand
-                                    : "Enter brand"
-                                }
-                                value={values.brand}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                              />
-                            </div>
-                          ) : (
-                            <span>{i?.brand}</span>
-                          )}
-                        </td>
-
-                        <td>
-                          {GetId === i._id ? (
-                            <div>
-                              <input
-                                name="price"
-                                type="text"
-                                placeholder={
-                                  errors.price && touched.price
-                                    ? errors.price
-                                    : "Enter price"
-                                }
-                                value={values.price}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                              />
-                            </div>
-                          ) : (
-                            <span>{i?.price}</span>
-                          )}
-                        </td>
-                        <td>
-                          {GetId === i._id ?
-                            (
-                              <>
-                                <input
-                                  name="file"
-                                  type="file"
-                                  onChange={(event) => {
-                                    singleFile.push(event.target.files[0])
-                                    setFieldValue("car_file", singleFile);
-                                    file.push(URL.createObjectURL(event.target.files[0]))
-                                    setSelectedImage(event.currentTarget.files);
-                                    console.log(event.currentTarget.files);
-                                  }}
-                                />
-                                <button className="btn btn-primary" onClick={() => { setAddImage(true); setCount(isCount + 1); console.log(isCount) }}><i class="fa-solid fa-plus mr-2"></i>Add Image</button>
-                                {isAddImage
-                                  ? Array(isCount)
-                                    ?.fill("-")
-                                    ?.map(() => {
-                                      return (
-                                        <>
-                                          <input
-                                            name="car_file"
-                                            type="file"
-                                            onChange={(e) => {
-                                              singleFile.push(e.target.files[0]);
-                                              setFieldValue("car_file", singleFile);
-                                              file.push(URL.createObjectURL(e.target.files[0]));
-                                            }}
-                                          />
-                                        </>
-                                      );
-                                    })
-                                  : null}
-                                {file.length == 0 ? null : (
-                                  <div style={styles.preview}>
-
-
-                                    {
-                                      file.map((j) => {
-                                        return (
-                                          <img
-                                            src={j}
-                                            style={styles.image}
-                                            alt="Image"
-                                            height="150px"
-                                            width="150px"
-                                          />
-                                        )
-                                      })
-                                    }
-                                    <button
-                                      onClick={removeSelectedImage}
-                                      style={styles.delete}
-                                    >
-                                      Remove This Image
-                                    </button>
-
-                                  </div>
+                            ))}
+                          </span>
+                          <span onClick={handleSubmit} className="border-transparent">
+                            <button
+                              className="btn btn-primary"
+                              disabled={disabled}
+                            >
+                              <span className="flex items-center">
+                                {isUpdating ? null : (
+                                  <i class="fa-solid fa-plus mr-2"></i>
                                 )}
+                                <span className="hidden xl:block lg:block">New</span>
+                              </span>
+                            </button>
+                          </span>
+                        </div>
+
+
+                      </div>
+                    </div>
+                  ) : (
+                    <tbody>
+                      {getdata?.map((i, index) => {
+                        return (
+                          <tr className="text-[10px] text-center xl:text-[16px] lg:text-[16px] md:text-[16px]">
+                            <td key={index}>
+                              {GetId === i._id ? (
                                 <div>
-                                  {!selectedImage || selectedImage == "" ? (
-                                    <div>
-                                      <div style={styles.preview}>
-
-                                        {
-                                          i.image.map((j) => {
-                                            return (
-                                              <img
-                                                src={`${process.env.REACT_APP_BASE_URL}file/${j}`}
-                                                alt="image"
-                                                height="150px"
-                                                width="150px"
-                                                style={styles.image}
-                                              />
-                                            )
-                                          })
-                                        }
-                                      </div>
-
-                                    </div>
-                                  ) : (
-                                    ""
-                                  )}
-
+                                  <input
+                                    name="name"
+                                    type="text"
+                                    placeholder={
+                                      errors.name && touched.name
+                                        ? errors.color
+                                        : "Enter name"
+                                    }
+                                    value={values.name}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                  />
                                 </div>
-                              </>
-                            )
-                            :
-                            (
+                              ) : (
+                                <span>{i?.name}</span>
+                              )}
+                            </td>
+                            <td>
+                              {GetId === i._id ? (
+                                <div>
+                                  <input
+                                    name="color"
+                                    type="text"
+                                    placeholder={
+                                      errors.color && touched.color
+                                        ? errors.color
+                                        : "Enter color"
+                                    }
+                                    value={values.color}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                  />
+                                </div>
+                              ) : (
+                                <span>{i?.color}</span>
+                              )}
+                            </td>
+                            <td>
+                              {GetId === i._id ? (
+                                <div>
+                                  <input
+                                    name="brand"
+                                    type="text"
+                                    placeholder={
+                                      errors.brand && touched.brand
+                                        ? errors.brand
+                                        : "Enter brand"
+                                    }
+                                    value={values.brand}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                  />
+                                </div>
+                              ) : (
+                                <span>{i?.brand}</span>
+                              )}
+                            </td>
 
-                              <div>
-                                {
-                                  i.image.map((j) => {
+                            <td>
+                              {GetId === i._id ? (
+                                <div>
+                                  <input
+                                    name="price"
+                                    type="text"
+                                    placeholder={
+                                      errors.price && touched.price
+                                        ? errors.price
+                                        : "Enter price"
+                                    }
+                                    value={values.price}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                  />
+                                </div>
+                              ) : (
+                                <span>{i?.price}</span>
+                              )}
+                            </td>
+                            <td>
+                              {GetId === i._id ? (
+                                <>
+                                  <button
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                      setImage([...isImage, { image: "" }]);
+                                    }}
+                                  >
+                                    <i class="fa-solid fa-plus mr-2"></i><span className="hidden xl:block lg:block">Add
+                                      Image</span>
+                                  </button>
+                                  {isImage.map((e, i) => (
+                                    <ImageUploading
+                                      onUploadImage={(e) => {
+                                        let s = isImage;
+                                        s[i] = {
+                                          image: e.target.files[0],
+                                        };
+                                        setImage([...s]);
+                                        setFieldValue("car_file", s);
+                                        console.log(isImage);
+                                      }}
+                                      showImage={e}
+                                      removeSelectedImage={(id) => {
+                                        let s = isImage;
+                                        s[i] = { image: "" };
+                                        // setFieldValue("car_file",s)
+                                        setImage(
+                                          s.filter((img, i) => i !== img)
+                                        );
+                                        console.log(isImage);
+                                      }}
+                                    />
+                                  ))}
+                                </>
+                              ) : (
+                                <div>
+                                  {i.image.map((j) => {
                                     return (
                                       <img
                                         src={`${process.env.REACT_APP_BASE_URL}file/${j}`}
                                         alt="image"
                                         height="150px"
                                         width="150px"
+                                        className="img-fluid m-auto"
                                         onClick={() => {
                                           setOpenModal(true);
 
                                           edit(i);
                                         }}
                                       />
-                                    )
-                                  })
-                                }
-                              </div>
-                            )
-                          }
-                        </td>
-                        <td>
-
-                          {GetId === i._id ? (
-                            null
-                          ) : (
-                            <button
-                              className="btn btn-danger"
-                              onClick={() => {
-                                Delete(i._id);
-                              }}
-                            >
-                              {isUpdating ? (
-                                <i className="fa fa-spinner animate-spin mr-2"></i>
-                              ) : (
-                                // <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
-                                <i class="fa-solid fa-trash"></i>
+                                    );
+                                  })}
+                                </div>
                               )}
-                              Delete
-                            </button>
-                          )}
+                            </td>
+                            <td>
+                              {GetId === i._id ? null : (
+                                <button
+                                  className="btn btn-danger"
+                                  onClick={() => {
+                                    Delete(i._id);
+                                  }}
+                                >
+                                  <span className="flex items-center">
+                                    {isUpdating ? (
+                                      <i className="fa fa-spinner animate-spin mr-2"></i>
+                                    ) : (
+                                      // <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
 
-                        </td>
-                        <td>
-                          {GetId === i._id ? (
-                            <button
-                              className="btn btn-primary"
-                              onClick={() => {
-                                confirm(GetId);
-                                editCars(true)
-                              }}
-                            >
-                              {isUpdating ? (
-                                // <i className="fa fa-spinner animate-spin mr-2"></i>
-                                null
-                              ) : (
-                                <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
-                              )}
-                              Confirm
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                edit(i);
-                              }}
-                              className="btn btn-primary"
-                            >
-                              {isUpdating ? (
-                                <i className="fa fa-spinner animate-spin mr-2"></i>
-                              ) : (
-                                // <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
-                                null
-                              )}
-                              Update
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
+                                      <i class="fa-solid fa-trash"></i>
+                                    )}
+                                    <span className="hidden xl:block lg:block">
+                                      DELETE
+                                    </span>
+                                  </span>
 
-                }
-              </tbody>
-            )}
-          </table>
-        </div>
+                                </button>
+                              )}
+                            </td>
+                            <td>
+                              {GetId === i._id ? (
+                                <button
+                                  className="btn btn-primary"
+                                  onClick={() => {
+                                    confirm(GetId);
+                                    editCars(true);
+                                  }}
+                                >
+                                  {isUpdating ? null : (
+                                    <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
+                                  )}
+                                  Confirm
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    edit(i);
+                                  }}
+                                  className="btn btn-primary"
+                                >
+                                  <span className="flex items-center">
+                                    {isUpdating ? (
+                                      <i className="fa fa-spinner animate-spin mr-2"></i>
+                                    ) :
+                                      (
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                      )}
+                                    <span className="hidden xl:block lg:block">
+                                      UPDATE
+                                    </span>
+                                  </span>
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  )}
+                </table>
+              </div>
+            </div>
+          </div>
+          <Footer />
+
+        </>
       )}
       <Modal
         classNames={{
@@ -718,107 +633,52 @@ export default function AddUser() {
         <div>
           <tr>
             <td>
-              <input
-                name="file"
-                type="file"
-                onChange={(event) => {
-                  singleFile.push(event.target.files[0])
-                  setFieldValue("car_file", singleFile);
-                  file.push(URL.createObjectURL(event.target.files[0]))
-
-                  // }
-                  console.log(selectedImage);
-                  setSelectedImage(file);
-                  console.log(selectedImage);
-
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setImage([...isImage, { image: "" }]);
                 }}
-              />
-
-              {file.length == 0 ? (
-                <div style={styles.preview}>
-                  {
-                    isPreview.map((image) => {
-                      return (
-                        <img
-                          style={styles.image}
-                          src={`${process.env.REACT_APP_BASE_URL}file/${image}`}
-                          alt="thumb"
-                          height="150px"
-                          width="150px"
-                        />
-                      )
-                    })}
-                  <button className="btn btn-primary" onClick={() => { setAddImage(true); setCount(isCount + 1); console.log(isCount) }}><i class="fa-solid fa-plus mr-2"></i>Add Image</button>
-                  {
-                    isAddImage
-                      ? Array(isCount)
-                        ?.fill("-")
-                        ?.map(() => {
-                          return (
-                            <>
-                              <input
-                                name="car_file"
-                                type="file"
-                                onChange={(e) => {
-                                  singleFile.push(e.target.files[0]);
-                                  setFieldValue("car_file", singleFile);
-                                  file.push(URL.createObjectURL(e.target.files[0]));
-                                }}
-                              />
-                            </>
-                          );
-                        })
-                      : null}
-                </div>
-              ) : (
-                <div style={styles.preview}>
-                  {
-                    file.map((image) => {
-                      return (
-                        <img
-                          src={(image)}
-                          style={styles.image}
-                          alt="image"
-                          height="150px"
-                          width="150px"
-                        />
-
-                      )
-                    })
-                  }
-                  <button onClick={removeSelectedImage} style={styles.delete}>
-                    Remove This Image
-                  </button>
-                  <button className="btn btn-primary" onClick={() => { setAddImage(true); setCount(isCount + 1); console.log(isCount) }}><i class="fa-solid fa-plus mr-2"></i>Add Image</button>
-                  {isAddImage
-                    ? Array(isCount)
-                      ?.fill("-")
-                      ?.map(() => {
-                        return (
-                          <>
-                            <input
-                              name="car_file"
-                              type="file"
-                              onChange={(e) => {
-                                singleFile.push(e.target.files[0]);
-                                setFieldValue("car_file", singleFile);
-                                file.push(URL.createObjectURL(e.target.files[0]));
-                              }}
-                            />
-                          </>
-                        );
-                      })
-                    : null}
-                  <button
-                    onClick={() => {
-                      confirm(GetId);
-                      setOpenModal(false);
-                    }}
-                  >
-                    Edit
-                  </button>
-                </div>
-              )}
+              >
+                <i class="fa-solid fa-plus mr-2"></i>Add Image
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              {isImage.map((e, i) => (
+                <ImageUploading
+                  onUploadImage={(e) => {
+                    let s = isImage;
+                    s[i] = {
+                      image: e.target.files[0],
+                    };
+                    setImage([...s]);
+                    setFieldValue("car_file", s);
+                    console.log(isImage);
+                  }}
+                  showImage={e}
+                  removeSelectedImage={(id) => {
+                    let s = isImage;
+                    s[i] = { image: "" };
+                    // setFieldValue("car_file",s)
+                    setImage(s.filter((img, i) => i !== img));
+                    console.log(isImage);
+                  }}
+                />
+              ))}
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  confirm(GetId);
+                  setOpenModal(false);
+                }}
+              >
+                Edit
+              </button>
             </td>
           </tr>
         </div>
